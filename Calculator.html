@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern JavaScript Calculator</title>
+    <style>
+        /* CSS - The Design */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .calculator {
+            background-color: #1c1c1c;
+            padding: 20px;
+            border-radius: 25px;
+            box-shadow: 0px 20px 50px rgba(0, 0, 0, 0.3);
+            width: 320px;
+        }
+
+        #display {
+            width: 100%;
+            height: 60px;
+            font-size: 2.5rem;
+            text-align: right;
+            border: none;
+            background-color: transparent;
+            color: white;
+            margin-bottom: 20px;
+            padding-right: 10px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        button {
+            height: 65px;
+            width: 65px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        /* Color Schemes */
+        .btn-number {
+            background-color: #333333;
+            color: white;
+        }
+
+        .btn-number:hover {
+            background-color: #4a4a4a;
+        }
+
+        .btn-operator {
+            background-color: #ff9f0a;
+            color: white;
+        }
+
+        .btn-operator:hover {
+            background-color: #ffb340;
+        }
+
+        .btn-special {
+            background-color: #a5a5a5;
+            color: black;
+        }
+
+        .btn-special:hover {
+            background-color: #d4d4d2;
+        }
+
+        .btn-zero {
+            grid-column: span 2;
+            width: 142px;
+            border-radius: 35px;
+            text-align: left;
+            padding-left: 25px;
+        }
+
+        .btn-equal {
+            background-color: #ff9f0a;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator">
+    <input type="text" id="display" value="0" disabled>
+    <div class="buttons">
+        <!-- Row 1 -->
+        <button class="btn-special" onclick="clearDisplay()">AC</button>
+        <button class="btn-special" onclick="toggleSign()">+/-</button>
+        <button class="btn-special" onclick="percentage()">%</button>
+        <button class="btn-operator" onclick="appendOperator('/')">÷</button>
+
+        <!-- Row 2 -->
+        <button class="btn-number" onclick="appendNumber('7')">7</button>
+        <button class="btn-number" onclick="appendNumber('8')">8</button>
+        <button class="btn-number" onclick="appendNumber('9')">9</button>
+        <button class="btn-operator" onclick="appendOperator('*')">×</button>
+
+        <!-- Row 3 -->
+        <button class="btn-number" onclick="appendNumber('4')">4</button>
+        <button class="btn-number" onclick="appendNumber('5')">5</button>
+        <button class="btn-number" onclick="appendNumber('6')">6</button>
+        <button class="btn-operator" onclick="appendOperator('-')">-</button>
+
+        <!-- Row 4 -->
+        <button class="btn-number" onclick="appendNumber('1')">1</button>
+        <button class="btn-number" onclick="appendNumber('2')">2</button>
+        <button class="btn-number" onclick="appendNumber('3')">3</button>
+        <button class="btn-operator" onclick="appendOperator('+')">+</button>
+
+        <!-- Row 5 -->
+        <button class="btn-number btn-zero" onclick="appendNumber('0')">0</button>
+        <button class="btn-number" onclick="appendNumber('.')">.</button>
+        <button class="btn-equal" onclick="calculate()">=</button>
+    </div>
+</div>
+
+<script>
+    /* JavaScript - The Logic */
+    let display = document.getElementById('display');
+    let currentInput = '0';
+    let shouldResetScreen = false;
+
+    function updateDisplay() {
+        display.value = currentInput;
+    }
+
+    function appendNumber(number) {
+        if (currentInput === '0' || shouldResetScreen) {
+            currentInput = number;
+            shouldResetScreen = false;
+        } else {
+            // Prevent multiple decimals
+            if (number === '.' && currentInput.includes('.')) return;
+            currentInput += number;
+        }
+        updateDisplay();
+    }
+
+    function appendOperator(operator) {
+        if (shouldResetScreen) shouldResetScreen = false;
+        
+        // Don't add operator if last character is an operator
+        const lastChar = currentInput.slice(-1);
+        if (['+', '-', '*', '/'].includes(lastChar)) {
+            currentInput = currentInput.slice(0, -1) + operator;
+        } else {
+            currentInput += operator;
+        }
+        updateDisplay();
+    }
+
+    function clearDisplay() {
+        currentInput = '0';
+        updateDisplay();
+    }
+
+    function toggleSign() {
+        currentInput = (parseFloat(currentInput) * -1).toString();
+        updateDisplay();
+    }
+
+    function percentage() {
+        currentInput = (parseFloat(currentInput) / 100).toString();
+        updateDisplay();
+    }
+
+    function calculate() {
+        try {
+            // Replace visual operators with JS logic operators
+            let expression = currentInput.replace(/×/g, '*').replace(/÷/g, '/');
+            
+            // Perform calculation
+            // Using Function constructor instead of eval() for safety
+            let result = new Function('return ' + expression)();
+            
+            // Handle precision (e.g., 0.1 + 0.2)
+            currentInput = Number(Math.round(result + 'e10') + 'e-10').toString();
+            
+            shouldResetScreen = true;
+            updateDisplay();
+        } catch (error) {
+            currentInput = "Error";
+            updateDisplay();
+            shouldResetScreen = true;
+        }
+    }
+
+    // Add Keyboard Support
+    document.addEventListener('keydown', (event) => {
+        if (event.key >= 0 && event.key <= 9) appendNumber(event.key);
+        if (event.key === '.') appendNumber('.');
+        if (event.key === '=' || event.key === 'Enter') calculate();
+        if (event.key === 'Backspace') {
+            currentInput = currentInput.length > 1 ? currentInput.slice(0, -1) : '0';
+            updateDisplay();
+        }
+        if (event.key === 'Escape') clearDisplay();
+        if (['+', '-', '*', '/'].includes(event.key)) appendOperator(event.key);
+    });
+</script>
+
+</body>
+</html>
